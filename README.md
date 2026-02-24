@@ -2,13 +2,28 @@
 
 Minimal reproduction for [huggingface/transformers.js#1527](https://github.com/huggingface/transformers.js/issues/1527).
 
-## Error
+## Branches
+
+| Branch | Transformers version | Expected result |
+|--------|---------------------|-----------------|
+| `main` | `@huggingface/transformers@4.0.0-next.3` (npm) | ❌ `Failed to construct 'Worker'` CORS error |
+| `test-v4-loadWasmFactory-fix` | Built from [`v4-loadWasmFactory-fix`](https://github.com/huggingface/transformers.js/tree/v4-loadWasmFactory-fix) branch | ❌ `Failed to construct 'URL': Invalid URL` — still broken |
+
+## Error (main branch)
 
 ```
 Failed to construct 'Worker': Script at
 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0-dev.../dist'
 cannot be accessed from origin 'http://localhost:5175'.
 ```
+
+## Error (test-v4-loadWasmFactory-fix branch)
+
+```
+no available backend found. ERR: [wasm] TypeError: Failed to construct 'URL': Invalid URL
+```
+
+The error changed but the pipeline still fails. The fix correctly detects `crossOriginIsolated === true` and skips blob URLs, but then returns the CDN URL unchanged — ORT still tries to load a cross-origin Worker from it, which COEP blocks.
 
 ## Root Cause
 
@@ -22,10 +37,6 @@ COEP headers are required for `SharedArrayBuffer`, which ONNX Runtime itself nee
 3. v4 defaults `wasmPaths` to CDN → CDN files are cross-origin
 4. **💥 Worker construction fails**
 
-## Why `fs-eire` Could Not Reproduce
-
-Without COEP headers, CDN loading works fine. The `vite.config.ts` in this repo includes a `crossOriginIsolation()` plugin that sets COEP/COOP headers — **remove it and the error disappears**.
-
 ## Reproduce
 
 ```bash
@@ -34,13 +45,9 @@ npm run dev
 # Open http://localhost:5175 — error in console
 ```
 
-## Fix the Error (remove COEP from vite.config.ts)
-
-Delete the `crossOriginIsolation()` plugin from `vite.config.ts` — the error goes away, confirming the CDN `wasmPaths` alone are not the problem.
-
 ## Versions
 
-- `@huggingface/transformers@4.0.0-next.3`
+- `@huggingface/transformers@4.0.0-next.3` (main) / built from `v4-loadWasmFactory-fix` (this branch)
 - `onnxruntime-web@1.25.0-dev.20260212`
 - Vite 7.3.1
 - Chrome (latest), macOS
