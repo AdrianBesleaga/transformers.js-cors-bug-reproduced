@@ -7,9 +7,9 @@ Minimal reproduction for [huggingface/transformers.js#1527](https://github.com/h
 | Branch | Transformers version | Expected result |
 |--------|---------------------|-----------------|
 | `main` | `@huggingface/transformers@4.0.0-next.3` (npm) | ❌ `Failed to construct 'Worker'` CORS error |
-| `test-v4-loadWasmFactory-fix` | Built from [`v4-loadWasmFactory-fix`](https://github.com/huggingface/transformers.js/tree/v4-loadWasmFactory-fix) branch | ❌ `Failed to construct 'URL': Invalid URL` — still broken |
+| `test-v4-loadWasmFactory-fix` | `@huggingface/transformers@4.0.0-next.4` (npm) | ❌ `Failed to construct 'URL': Invalid URL` — still broken |
 
-## Error (main branch)
+## Error (main — 4.0.0-next.3)
 
 ```
 Failed to construct 'Worker': Script at
@@ -17,13 +17,13 @@ Failed to construct 'Worker': Script at
 cannot be accessed from origin 'http://localhost:5175'.
 ```
 
-## Error (test-v4-loadWasmFactory-fix branch)
+## Error (test-v4-loadWasmFactory-fix — 4.0.0-next.4)
 
 ```
 no available backend found. ERR: [wasm] TypeError: Failed to construct 'URL': Invalid URL
 ```
 
-The error changed but the pipeline still fails. The fix correctly detects `crossOriginIsolated === true` and skips blob URLs, but then returns the CDN URL unchanged — ORT still tries to load a cross-origin Worker from it, which COEP blocks.
+The error changed but the pipeline still fails. The fix correctly detects `crossOriginIsolated === true` in `canUseBlobURLs()` and skips blob URLs, but then returns the CDN URL unchanged — ORT still tries to load a cross-origin Worker from it, which COEP blocks.
 
 ## Root Cause
 
@@ -47,7 +47,7 @@ npm run dev
 
 ## Versions
 
-- `@huggingface/transformers@4.0.0-next.3` (main) / built from `v4-loadWasmFactory-fix` (this branch)
+- `@huggingface/transformers@4.0.0-next.4` (this branch)
 - `onnxruntime-web@1.25.0-dev.20260212`
 - Vite 7.3.1
 - Chrome (latest), macOS
