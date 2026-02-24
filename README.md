@@ -7,7 +7,9 @@ Minimal reproduction for [huggingface/transformers.js#1527](https://github.com/h
 | Branch | Transformers version | Expected result |
 |--------|---------------------|-----------------|
 | `main` | `@huggingface/transformers@4.0.0-next.3` (npm) | ❌ `Failed to construct 'Worker'` CORS error |
-| `test-v4-loadWasmFactory-fix` | `@huggingface/transformers@4.0.0-next.4` (npm) | ❌ `Failed to construct 'URL': Invalid URL` — still broken |
+| `test-v4-loadWasmFactory-fix` | Built from [`v4-loadWasmFactory-fix`](https://github.com/huggingface/transformers.js/tree/v4-loadWasmFactory-fix) @ [`41a6ca7`](https://github.com/huggingface/transformers.js/commit/41a6ca72d2be90f79ac397fe5e0f334ae9a15416) | ❌ `Failed to construct 'URL': Invalid URL` — still broken |
+
+> **Note:** `@huggingface/transformers@4.0.0-next.4` on npm does **not** include the `v4-loadWasmFactory-fix` branch changes. This branch vendors the built package directly from that branch.
 
 ## Error (main — 4.0.0-next.3)
 
@@ -17,7 +19,7 @@ Failed to construct 'Worker': Script at
 cannot be accessed from origin 'http://localhost:5175'.
 ```
 
-## Error (test-v4-loadWasmFactory-fix — 4.0.0-next.4)
+## Error (test-v4-loadWasmFactory-fix)
 
 ```
 no available backend found. ERR: [wasm] TypeError: Failed to construct 'URL': Invalid URL
@@ -47,7 +49,7 @@ npm run dev
 
 ## Versions
 
-- `@huggingface/transformers@4.0.0-next.4` (this branch)
+- Built from `v4-loadWasmFactory-fix` branch (commit `41a6ca7`, Feb 20 2026)
 - `onnxruntime-web@1.25.0-dev.20260212`
 - Vite 7.3.1
 - Chrome (latest), macOS
