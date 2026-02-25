@@ -2,7 +2,8 @@ import './style.css';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    <h1>Transformers.js v4 — CORS Reproduction</h1>
+    <h1>Transformers.js — CORS Reproduction</h1>
+    <p id="version" style="font-size:0.9rem; color:#60a5fa; font-weight:bold;"></p>
     <p>
       <a href="https://github.com/huggingface/transformers.js/issues/1527">#1527</a>
       — CDN <code>wasmPaths</code> + COEP headers breaks local dev servers
@@ -11,13 +12,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       ⏳ Auto-starting pipeline in worker…
     </p>
     <p id="isolation" style="font-size:0.85rem; color:#94a3b8;"></p>
-    <pre id="log" style="text-align:left; background:#1a1a2e; padding:1rem; border-radius:8px; max-height:400px; overflow-y:auto; font-size:0.85rem;"></pre>
+    <pre id="log" style="text-align:left; background:#1a1a2e; color:#e2e8f0; padding:1rem; border-radius:8px; max-height:400px; overflow-y:auto; font-size:0.85rem;"></pre>
   </div>
 `;
 
 const logEl = document.getElementById('log')!;
 const statusEl = document.getElementById('status')!;
 const isolationEl = document.getElementById('isolation')!;
+const versionEl = document.getElementById('version')!;
 
 // Show cross-origin isolation status
 isolationEl.textContent = 'Main page crossOriginIsolated: ' + self.crossOriginIsolated;
@@ -37,6 +39,7 @@ const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'modu
 worker.onmessage = (e) => {
   const d = e.data;
   if (d.type === 'config') {
+    versionEl.textContent = '@huggingface/transformers v' + (d.version || 'unknown');
     log('wasmPaths = ' + JSON.stringify(d.wasmPaths));
     log('proxy = ' + d.proxy);
     log('worker crossOriginIsolated = ' + d.crossOriginIsolated);

@@ -1,15 +1,9 @@
 /**
- * Reproduction for https://github.com/huggingface/transformers.js/issues/1527
+ * v3 comparison test for https://github.com/huggingface/transformers.js/issues/1527
  *
- * The CORS error happens when ALL of these are true:
- *  1. wasmPaths points to CDN (the v4 default)
- *  2. The page has Cross-Origin-Embedder-Policy: require-corp (needed
- *     for SharedArrayBuffer, which ORT uses for multi-threaded WASM)
- *  3. CDN resources don't carry Cross-Origin-Resource-Policy headers
- *
- * Without COEP headers, CDN loading works fine.
- * With COEP headers, browsers block ALL cross-origin resources that
- * lack a Cross-Origin-Resource-Policy header — including ORT's WASM files.
+ * Testing whether v3 works with COEP headers + same model/pipeline.
+ * v3 did NOT set wasmPaths to CDN — it let ORT resolve WASM files
+ * relative to the importing script (bundler output).
  */
 
 import { pipeline, env } from '@huggingface/transformers';
@@ -17,26 +11,32 @@ import { pipeline, env } from '@huggingface/transformers';
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-console.log('[Worker] Config:');
-console.log('  wasmPaths:', JSON.stringify(env.backends.onnx?.wasm?.wasmPaths));
-console.log('  proxy:', env.backends.onnx?.wasm?.proxy);
+console.log('[Worker] v3 Config:');
+console.log('  env:', JSON.stringify({
+    allowLocalModels: env.allowLocalModels,
+    useBrowserCache: env.useBrowserCache,
+    // @ts-ignore v3 may not have backends
+    backends: env.backends,
+}));
 console.log('  crossOriginIsolated:', self.crossOriginIsolated);
 
 self.postMessage({
     type: 'config',
-    wasmPaths: env.backends.onnx?.wasm?.wasmPaths,
-    proxy: env.backends.onnx?.wasm?.proxy,
+    version: env.version,
+    // @ts-ignore
+    wasmPaths: env.backends?.onnx?.wasm?.wasmPaths ?? 'not set (v3 default)',
+    // @ts-ignore
+    proxy: env.backends?.onnx?.wasm?.proxy ?? 'not set',
     crossOriginIsolated: self.crossOriginIsolated,
 });
 
-console.log('[Worker] Loading sentiment-analysis pipeline (device: wasm)...');
+console.log('[Worker] Loading sentiment-analysis pipeline...');
 
 try {
-    // Use a tiny text model — we just need ORT to init WASM from CDN
     const classifier = await pipeline(
         'sentiment-analysis',
         'Xenova/distilbert-base-uncased-finetuned-sst-2-english',
-        { device: 'wasm' }
+        { device: 'wasm' },
     );
 
     const result = await classifier('This is a test');
